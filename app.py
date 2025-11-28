@@ -1,14 +1,26 @@
+"""
+Metro Customer Churn Prediction App
+
+This Streamlit app allows users to input customer details and predicts the likelihood of churn
+using a pre-trained machine learning model.
+"""
 
 import streamlit as st
 import pandas as pd
 import pickle
 
-# Load the model
-with open("metro_churn_model.pkl", "rb") as f:
-    model = pickle.load(f)
+# Set page configuration
+st.set_page_config(page_title="Metro Churn Prediction", page_icon="🚇")
+
+@st.cache_resource
+def load_model():
+    """Load the pre-trained model from the pickle file."""
+    with open("metro_churn_model.pkl", "rb") as f:
+        return pickle.load(f)
+
+model = load_model()
 
 st.title("🚇 Metro Customer Churn Prediction")
-
 st.write("Enter customer details below to predict whether the customer is likely to churn.")
 
 # Input fields
@@ -30,6 +42,12 @@ if st.button("Predict Churn"):
         "PaymentMethod": payment,
         "PhoneService": phone
     }])
-
-    prediction = model.predict(input_df)[0]
-    st.success(f"Prediction: {'Churn' if prediction == 1 else 'No Churn'}")
+    
+    try:
+        prediction = model.predict(input_df)[0]
+        if prediction == 1:
+            st.error("Prediction: Churn (High Risk)")
+        else:
+            st.success("Prediction: No Churn (Low Risk)")
+    except Exception as e:
+        st.error(f"Error making prediction: {e}")
